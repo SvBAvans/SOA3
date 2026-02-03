@@ -1,4 +1,6 @@
 ﻿using Cinema.Domain;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace Cinema
 {
@@ -93,8 +95,50 @@ namespace Cinema
 
         public void Export(TicketExportFormat exportFormat)
         {
-
+            if (exportFormat == TicketExportFormat.JSON)
+            {
+                string json = ExportToJson(true);
+                File.WriteAllText("output.json", json);
+            }     
+            else if (exportFormat == TicketExportFormat.PLAINTEXT)
+            {
+                string text = ExportToPlainText();
+                File.WriteAllText("output.txt", text);
+            }
         }
+
+        private string ExportToJson(bool pretty = false)
+        {
+            var json = JsonConvert.SerializeObject(this,  pretty ? Formatting.Indented : Formatting.None);
+            return json;
+        }
+        
+        private string ExportToPlainText()
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Order number: {OrderNr}");
+            sb.AppendLine($"Student order: {(IsStudentOrder ? "Yes" : "No")}");
+            sb.AppendLine();
+            sb.AppendLine("Tickets:");
+
+            foreach (var ticket in Tickets)
+            {
+                sb.AppendLine(
+                    $"- Movie: {ticket.MovieScreening.Movie.Title}, " +
+                    $"Date: {ticket.MovieScreening.DateAndTime:dd-MM-yyyy HH:mm}, " +
+                    $"Row: {ticket.RowNr}, " +
+                    $"Seat: {ticket.SeatNr}, " +
+                    $"Premium: {(ticket.IsPremiumTicket() ? "Yes" : "No")}"
+                );
+            }
+
+            sb.AppendLine();
+            sb.AppendLine($"Total price: €{CalculatePrice():0.00}");
+
+            return sb.ToString();
+        }
+
     }
 
     public enum TicketExportFormat

@@ -1,8 +1,11 @@
-﻿namespace Cinema.Domain
+﻿using Newtonsoft.Json;
+
+namespace Cinema.Domain
 {
     public class Movie
     {
         public string Title { get; set; }
+        [JsonIgnore]
         public List<MovieScreening> Screenings = new List<MovieScreening>();
 
         public Movie(string title)
