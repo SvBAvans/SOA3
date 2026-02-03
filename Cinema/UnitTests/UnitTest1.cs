@@ -5,47 +5,50 @@ namespace UnitTests
 {
     public class UnitTest1
     {
-        // Helper: bouw een screening op een specifieke datum/tijd met vaste stoelprijs
+        // Helpers:
+        // Build a screening on a specific date/time with a fixed seat price.
         private static MovieScreening ScreeningOn(DateTime dateTime, double pricePerSeat = 10.0)
         {
             var movie = new Movie("Test Movie");
             return new MovieScreening(movie, dateTime, pricePerSeat);
         }
 
+        // Build a ticket
         private static MovieTicket Ticket(MovieScreening screening, bool premium, int row, int seat)
             => new MovieTicket(screening, premium, row, seat);
 
         // STUDENT
+        // Weekend or weekday doesn't matter for students. Every second one is free.
         [Fact]
         public void StudentOrder_EverySecondTicketFree_IncludingPremiumSurcharge()
         {
-            // Weekend of doordeweeks maakt niet uit voor studenten: elke 2e gratis
-            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // zaterdag
+            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // saturday
             var order = new Order(orderNr: 1, isStudentOrder: true);
 
-            // 2 tickets: 1 standaard, 1 premium
+            // 2 tickets: 1 standard, 1 premium
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
-            order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2));  // 10+2, maar deze is 2e => gratis incl toeslag
+            order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2));  // 10+2, but this one is the second, so it is free including premium fee.
 
             var total = order.CalculatePrice();
 
-            // Alleen eerste ticket betalen: 10
+            // Only pay first ticket, 10.
             Assert.Equal(10.0, total, precision: 2);
         }
 
         [Fact]
         public void StudentOrder_ThreeTickets_SecondFree_ThirdPaid()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 8, 20, 0, 0), pricePerSeat: 12.0); // zondag
+            var screening = ScreeningOn(new DateTime(2026, 2, 8, 20, 0, 0), pricePerSeat: 12.0); // sunday
             var order = new Order(orderNr: 2, isStudentOrder: true);
 
-            // 3 standaard tickets à 12
+            // 3 standard tickets for 12
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 12
-            order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 2)); // gratis
+            order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 2)); // free
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 3)); // 12
 
             var total = order.CalculatePrice();
 
+            // 3 tickets for 12, of which 1 for free, so 24.
             Assert.Equal(24.0, total, precision: 2);
         }
 
@@ -55,40 +58,42 @@ namespace UnitTests
             var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0);
             var order = new Order(orderNr: 3, isStudentOrder: true);
 
-            // 4 tickets: 2e en 4e gratis
+            // 4 tickets: second and fourth free.
             order.AddSeatReservation(Ticket(screening, false, 1, 1)); // 10
-            order.AddSeatReservation(Ticket(screening, true, 1, 2)); // gratis (normaal 12)
+            order.AddSeatReservation(Ticket(screening, true, 1, 2)); // free
             order.AddSeatReservation(Ticket(screening, true, 1, 3)); // 12
-            order.AddSeatReservation(Ticket(screening, false, 1, 4)); // gratis (10)
+            order.AddSeatReservation(Ticket(screening, false, 1, 4)); // free
 
             var total = order.CalculatePrice();
 
-            // betalen: 10 + (10+2) = 22
+            // pay: 10 + (10+2) = 22
             Assert.Equal(22.0, total, precision: 2);
         }
 
-        // NIET STUDENT
+        // NON STUDENT
+        // Second one is only free on weekdays (monday-thursday)
         [Fact]
         public void NonStudent_WeekdayMonToThu_EverySecondTicketFree()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 2, 20, 0, 0), pricePerSeat: 10.0); // maandag
+            var screening = ScreeningOn(new DateTime(2026, 2, 2, 20, 0, 0), pricePerSeat: 10.0); // monday
             var order = new Order(orderNr: 10, isStudentOrder: false);
 
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
-            order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2)); // 10+3, maar 2e => gratis
+            order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2)); // 10+3, but 2nd so free.
 
             var total = order.CalculatePrice();
 
+            // Only pay first ticket, so 10.
             Assert.Equal(10.0, total, precision: 2);
         }
 
         [Fact]
         public void NonStudent_Weekend_NoFreeSecondTicket_IfLessThan6Tickets()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // zaterdag
+            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // saturday
             var order = new Order(orderNr: 11, isStudentOrder: false);
 
-            // 2 tickets, weekend, niet-student => geen gratis 2e, geen groepskorting
+            // 2 tickets, weekend, non-student => no 2nd for free, and no group discount (less then 6 tickets)
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
             order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2)); // 13
 
@@ -100,12 +105,12 @@ namespace UnitTests
         [Fact]
         public void NonStudent_Weekend_GroupDiscount10Percent_From6Tickets_IncludingPremiumSurcharge()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // zaterdag
+            var screening = ScreeningOn(new DateTime(2026, 2, 7, 20, 0, 0), pricePerSeat: 10.0); // saturday
             var order = new Order(orderNr: 12, isStudentOrder: false);
 
-            // 6 tickets: 3 standaard, 3 premium
-            // Subtotaal = 3*10 + 3*(10+3) = 30 + 39 = 69
-            // 10% korting => 62.10
+            // 6 tickets: 3 standard, 3 premium
+            // Subtotal = 3*10 + 3*(10+3) = 30 + 39 = 69
+            // 10% group discount => 62.10
             order.AddSeatReservation(Ticket(screening, false, 1, 1));
             order.AddSeatReservation(Ticket(screening, false, 1, 2));
             order.AddSeatReservation(Ticket(screening, false, 1, 3));
@@ -121,10 +126,10 @@ namespace UnitTests
         [Fact]
         public void NonStudent_Friday_NoFreeSecondTicket_AndNoGroupDiscountIfLessThan6()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 6, 20, 0, 0), pricePerSeat: 10.0); // vrijdag
+            var screening = ScreeningOn(new DateTime(2026, 2, 6, 20, 0, 0), pricePerSeat: 10.0); // friday
             var order = new Order(orderNr: 13, isStudentOrder: false);
 
-            // Vrijdag valt niet onder ma-di-wo-do regel
+            // Friday is not covered by the weekday rule (ma-di-wo-do)
             order.AddSeatReservation(Ticket(screening, false, 1, 1)); // 10
             order.AddSeatReservation(Ticket(screening, false, 1, 2)); // 10
 
@@ -138,6 +143,8 @@ namespace UnitTests
         public void EmptyOrder_CostIsZero()
         {
             var order = new Order(orderNr: 99, isStudentOrder: false);
+
+            // Don't add any seat reservations to the order, so total is 0.0
             var total = order.CalculatePrice();
             Assert.Equal(0.0, total, precision: 2);
         }
@@ -145,10 +152,9 @@ namespace UnitTests
         [Fact]
         public void PremiumSurcharge_Is2ForStudents_3ForNonStudents()
         {
-            var screening = ScreeningOn(new DateTime(2026, 2, 5, 20, 0, 0), pricePerSeat: 10.0); // donderdag
+            var screening = ScreeningOn(new DateTime(2026, 2, 5, 20, 0, 0), pricePerSeat: 10.0); // thursday
             var studentOrder = new Order(orderNr: 20, isStudentOrder: true);
             studentOrder.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 1)); // 12
-                                                                                                // (maar let op: als je hier 2 tickets zou doen, zou 2e gratis zijn)
 
             var nonStudentOrder = new Order(orderNr: 21, isStudentOrder: false);
             nonStudentOrder.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 1)); // 13
@@ -177,7 +183,7 @@ namespace UnitTests
                 Assert.NotNull(file);
 
                 var content = File.ReadAllText(file!);
-                Assert.Contains("500", content); // orderNr ergens in output
+                Assert.Contains("500", content); // orderNr somewhere in output
             }
             finally
             {
@@ -205,7 +211,7 @@ namespace UnitTests
                 Assert.NotNull(file);
 
                 var content = File.ReadAllText(file!);
-                // simpele "looks like JSON" checks
+                // simple "looks like JSON" checks
                 Assert.True(content.TrimStart().StartsWith("{") || content.TrimStart().StartsWith("["));
             }
             finally
@@ -215,7 +221,7 @@ namespace UnitTests
             }
         }
 
-        // Helpers voor export tests
+        // Helpers for export tests
         private static string CreateIsolatedTempDir()
         {
             var dir = Path.Combine(Path.GetTempPath(), "bioscoop_tests_" + Guid.NewGuid());
