@@ -1,4 +1,4 @@
-﻿namespace Cinema
+﻿namespace Cinema.Domain
 {
     public class Movie
     {

@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace Cinema
+namespace Cinema.Domain
 {
     public class MovieScreening
     {

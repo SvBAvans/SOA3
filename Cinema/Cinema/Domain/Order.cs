@@ -1,4 +1,6 @@
-﻿namespace Cinema
+﻿using Cinema.Domain;
+
+namespace Cinema
 {
     public class Order
     {
@@ -22,7 +24,7 @@
             Tickets.Add(ticket);
         }
 
-        public double Calculateprice()
+        public double CalculatePrice()
         {
             if (Tickets.Count == 0) return 0.0;
 
