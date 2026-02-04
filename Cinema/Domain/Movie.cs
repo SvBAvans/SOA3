@@ -6,7 +6,7 @@ namespace Cinema.Domain
     {
         public string Title { get; set; }
         [JsonIgnore]
-        public List<MovieScreening> Screenings = new List<MovieScreening>();
+        public List<MovieScreening> Screenings { get; } = new List<MovieScreening>();
 
         public Movie(string title)
         {

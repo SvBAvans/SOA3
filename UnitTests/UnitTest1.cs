@@ -212,7 +212,7 @@ namespace UnitTests
 
                 var content = File.ReadAllText(file!);
                 // simple "looks like JSON" checks
-                Assert.True(content.TrimStart().StartsWith("{") || content.TrimStart().StartsWith("["));
+                Assert.True(content.TrimStart().StartsWith('{') || content.TrimStart().StartsWith('['));
             }
             finally
             {

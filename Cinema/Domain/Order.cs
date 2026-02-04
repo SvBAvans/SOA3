@@ -8,7 +8,7 @@ namespace Cinema
     {
         public int OrderNr { get; set; }
         public bool IsStudentOrder { get; set; }
-        public List<MovieTicket> Tickets = new List<MovieTicket>();
+        public List<MovieTicket> Tickets { get; } = new List<MovieTicket>();
 
         public Order(int orderNr, bool isStudentOrder)
         {
@@ -43,7 +43,7 @@ namespace Cinema
             else
             {
                 int weekdayCounter = 0;
-                for (int i = 0; i < Tickets.Count; i++)
+                for (int i = 0; i < Tickets.Count; i ++)
                 {
                     DayOfWeek day = Tickets[i].MovieScreening.DateAndTime.DayOfWeek;
                     bool isWeekday = day is DayOfWeek.Monday or DayOfWeek.Tuesday or DayOfWeek.Wednesday or DayOfWeek.Thursday;
