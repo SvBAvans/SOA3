@@ -2,7 +2,7 @@
 using Cinema;
 
 var movie = new Movie("Dune 2");
-var screening = new MovieScreening(movie, new DateTime(2026, 2, 7, 20, 0, 0), 12.50); // donderdag
+var screening = new MovieScreening(movie, new DateTime(2026, 2, 7, 20, 0, 0, DateTimeKind.Local), 12.50); // donderdag
 movie.AddScreening(screening);
 
 var order = new Order(1, isStudentOrder: true);
