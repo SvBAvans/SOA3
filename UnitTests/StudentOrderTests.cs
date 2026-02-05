@@ -3,7 +3,7 @@ using Cinema.Domain;
 
 namespace UnitTests
 {
-    public class UnitTest1
+    public class StudentOrderTests
     {
         // Helpers:
         // Build a screening on a specific date/time with a fixed seat price.
