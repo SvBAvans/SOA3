@@ -46,7 +46,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"SvBAvans_SOA3" /o:"svbavans" /d:sonar.token="$env:SUPER_SECRET" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"SvBAvans_SOA3" /o:"svbavans" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           dotnet build
           dotnet-coverage collect "dotnet test" -f xml -o "coverage.xml"
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SUPER_SECRET"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
