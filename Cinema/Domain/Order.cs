@@ -1,8 +1,6 @@
-﻿using Cinema.Domain;
-using Newtonsoft.Json;
-using System.Text;
+﻿using Cinema.Exporter;
 
-namespace Cinema
+namespace Cinema.Domain
 {
     public class Order
     {
@@ -93,52 +91,10 @@ namespace Cinema
             return Math.Round(subTotal, 2, MidpointRounding.AwayFromZero);
         }
 
-        public void Export(TicketExportFormat exportFormat)
+        public void Export(IExporter exporter)
         {
-            if (exportFormat == TicketExportFormat.JSON)
-            {
-                string json = ExportToJson(true);
-                File.WriteAllText("output.json", json);
-            }     
-            else if (exportFormat == TicketExportFormat.PLAINTEXT)
-            {
-                string text = ExportToPlainText();
-                File.WriteAllText("output.txt", text);
-            }
+            exporter.Export(this);
         }
-
-        private string ExportToJson(bool pretty = false)
-        {
-            var json = JsonConvert.SerializeObject(this,  pretty ? Formatting.Indented : Formatting.None);
-            return json;
-        }
-        
-        private string ExportToPlainText()
-        {
-            var sb = new StringBuilder();
-
-            sb.AppendLine($"Order number: {OrderNr}");
-            sb.AppendLine($"Student order: {(IsStudentOrder ? "Yes" : "No")}");
-            sb.AppendLine();
-            sb.AppendLine("Tickets:");
-
-            foreach (var ticket in Tickets)
-            {
-                sb.AppendLine(
-                    $"- Movie: {ticket.MovieScreening.Movie.Title}, " +
-                    $"Date: {ticket.MovieScreening.DateAndTime:dd-MM-yyyy HH:mm}, " +
-                    $"Row: {ticket.RowNr}, " +
-                    $"Seat: {ticket.SeatNr}, " +
-                    $"Premium: {(ticket.IsPremiumTicket() ? "Yes" : "No")}"
-                );
-            }
-
-            sb.AppendLine();
-            sb.AppendLine($"Total price: €{CalculatePrice():0.00}");
-
-            return sb.ToString();
-        }
-
     }
 
     public enum TicketExportFormat

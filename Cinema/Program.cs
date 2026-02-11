@@ -1,5 +1,6 @@
 ﻿using Cinema.Domain;
 using Cinema;
+using Cinema.Exporter;
 
 var movie = new Movie("Dune 2");
 var screening = new MovieScreening(movie, new DateTime(2026, 2, 7, 20, 0, 0, DateTimeKind.Local), 12.50); // donderdag
@@ -14,7 +15,7 @@ order.AddSeatReservation(new MovieTicket(screening, true, 5, 13));  // premium
 
 Console.WriteLine($"Price: {order.CalculatePrice():0.00}");
 
-order.Export(TicketExportFormat.PLAINTEXT);
-order.Export(TicketExportFormat.JSON);
+order.Export(new TextExporter());
+order.Export(new JsonExporter());
 
 Console.WriteLine("Exported order_1.txt and order_1.json");

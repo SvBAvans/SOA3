@@ -1,5 +1,6 @@
 using Cinema;
 using Cinema.Domain;
+using Cinema.Exporter;
 
 namespace UnitTests
 {
@@ -177,7 +178,7 @@ namespace UnitTests
                 var order = new Order(orderNr: 500, isStudentOrder: true);
                 order.AddSeatReservation(Ticket(screening, false, 1, 1));
 
-                order.Export(TicketExportFormat.PLAINTEXT);
+                order.Export( new TextExporter());
 
                 var file = FindNewestFile(tempDir, "*.txt");
                 Assert.NotNull(file);
@@ -205,7 +206,7 @@ namespace UnitTests
                 var order = new Order(orderNr: 501, isStudentOrder: false);
                 order.AddSeatReservation(Ticket(screening, true, 1, 1));
 
-                order.Export(TicketExportFormat.JSON);
+                order.Export(new JsonExporter());
 
                 var file = FindNewestFile(tempDir, "*.json");
                 Assert.NotNull(file);
