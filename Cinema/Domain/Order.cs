@@ -1,8 +1,8 @@
-﻿using Cinema.Domain;
-using Newtonsoft.Json;
-using System.Text;
+﻿using Cinema.Exporter;
+using Cinema.PricePolicy;
+using Cinema.PricePolicy.impl;
 
-namespace Cinema
+namespace Cinema.Domain
 {
     public class Order
     {
@@ -26,47 +26,22 @@ namespace Cinema
             Tickets.Add(ticket);
         }
 
-        public double CalculatePrice()
+        public double CalculatePrice(
+            IFreeTicketPolicy freeTicketPolicy,
+            IPremiumSurchargePolicy premiumSurchargePolicy,
+            IGroupDiscountPolicy groupDiscountPolicy)
         {
-            if (Tickets.Count == 0) return 0.0;
+            if (Tickets.Count == 0) return 0;
 
-            // Determine which tickets are free.
-            bool[] isFree = new bool[Tickets.Count];
-
-            if (IsStudentOrder)
-            {
-                for (int i = 1; i < Tickets.Count; i += 2)
-                {
-                    isFree[i] = true;
-                }
-            }
-            else
-            {
-                int weekdayCounter = 0;
-                for (int i = 0; i < Tickets.Count; i ++)
-                {
-                    DayOfWeek day = Tickets[i].MovieScreening.DateAndTime.DayOfWeek;
-                    bool isWeekday = day is DayOfWeek.Monday or DayOfWeek.Tuesday or DayOfWeek.Wednesday or DayOfWeek.Thursday;
-
-                    if (!isWeekday) continue;
-
-                    weekdayCounter++;
-                    if (weekdayCounter % 2 == 0)
-                    {
-                        isFree[i] = true;
-                    }
-                }
-            }
-
-            // Calculate total without group discount
-            double premiumExtra = IsStudentOrder ? 2.0 : 3.0;
+            bool[] isFree = freeTicketPolicy.GetFreeTickets(Tickets);
+            double premiumExtra = premiumSurchargePolicy.GetSurchargePerPremiumTicket();
 
             double subTotal = 0.0;
             for (int i = 0; i < Tickets.Count; i++)
             {
                 if (isFree[i]) continue;
-
-                MovieTicket ticket = Tickets[i];
+                
+                var ticket = Tickets[i];
                 double price = ticket.MovieScreening.PricePerSeat;
 
                 if (ticket.IsPremiumTicket())
@@ -77,68 +52,31 @@ namespace Cinema
                 subTotal += price;
             }
 
-            // Calculate groupdiscount for non-students
-            if (!IsStudentOrder && Tickets.Count >= 6)
-            {
-                bool isWeekend = Tickets.All(ticket =>
-                    ticket.MovieScreening.DateAndTime.DayOfWeek is DayOfWeek.Friday or DayOfWeek.Saturday or DayOfWeek.Sunday);
+            subTotal = groupDiscountPolicy.ApplyDiscount(subTotal, Tickets);
             
-            
-                if (isWeekend)
-                {
-                    subTotal *= 0.90;
-                }
-            }
-
             return Math.Round(subTotal, 2, MidpointRounding.AwayFromZero);
         }
 
-        public void Export(TicketExportFormat exportFormat)
+        public void Export(IExporter exporter)
         {
-            if (exportFormat == TicketExportFormat.JSON)
-            {
-                string json = ExportToJson(true);
-                File.WriteAllText("output.json", json);
-            }     
-            else if (exportFormat == TicketExportFormat.PLAINTEXT)
-            {
-                string text = ExportToPlainText();
-                File.WriteAllText("output.txt", text);
-            }
-        }
-
-        private string ExportToJson(bool pretty = false)
-        {
-            var json = JsonConvert.SerializeObject(this,  pretty ? Formatting.Indented : Formatting.None);
-            return json;
+            exporter.Export(this);
         }
         
-        private string ExportToPlainText()
+        public (IFreeTicketPolicy free, IPremiumSurchargePolicy premium, IGroupDiscountPolicy group) CreatePricePolicies()
         {
-            var sb = new StringBuilder();
-
-            sb.AppendLine($"Order number: {OrderNr}");
-            sb.AppendLine($"Student order: {(IsStudentOrder ? "Yes" : "No")}");
-            sb.AppendLine();
-            sb.AppendLine("Tickets:");
-
-            foreach (var ticket in Tickets)
+            if (IsStudentOrder)
             {
-                sb.AppendLine(
-                    $"- Movie: {ticket.MovieScreening.Movie.Title}, " +
-                    $"Date: {ticket.MovieScreening.DateAndTime:dd-MM-yyyy HH:mm}, " +
-                    $"Row: {ticket.RowNr}, " +
-                    $"Seat: {ticket.SeatNr}, " +
-                    $"Premium: {(ticket.IsPremiumTicket() ? "Yes" : "No")}"
+                return (
+                    new StudentFreeTicketPolicy(),
+                    new StudentPremiumSurchargePolicy(),
+                    new NoGroupDiscountPolicy()
                 );
             }
 
-            sb.AppendLine();
-            sb.AppendLine($"Total price: €{CalculatePrice():0.00}");
-
-            return sb.ToString();
+            return (new NonStudentFreeTicketPolicy(),
+                new NonStudentPremiumSurchagePolicy(),
+                new NonStudentWeekendGroupDiscountPolicy());
         }
-
     }
 
     public enum TicketExportFormat

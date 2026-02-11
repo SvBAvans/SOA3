@@ -1,5 +1,5 @@
-using Cinema;
 using Cinema.Domain;
+using Cinema.Exporter;
 
 namespace UnitTests
 {
@@ -29,7 +29,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
             order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2));  // 10+2, but this one is the second, so it is free including premium fee.
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             // Only pay first ticket, 10.
             Assert.Equal(10.0, total, precision: 2);
@@ -46,7 +47,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 2)); // free
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 3)); // 12
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             // 3 tickets for 12, of which 1 for free, so 24.
             Assert.Equal(24.0, total, precision: 2);
@@ -64,7 +66,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, true, 1, 3)); // 12
             order.AddSeatReservation(Ticket(screening, false, 1, 4)); // free
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             // pay: 10 + (10+2) = 22
             Assert.Equal(22.0, total, precision: 2);
@@ -81,7 +84,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
             order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2)); // 10+3, but 2nd so free.
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             // Only pay first ticket, so 10.
             Assert.Equal(10.0, total, precision: 2);
@@ -97,7 +101,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, premium: false, row: 1, seat: 1)); // 10
             order.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 2)); // 13
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             Assert.Equal(23.0, total, precision: 2);
         }
@@ -118,7 +123,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, true, 2, 2));
             order.AddSeatReservation(Ticket(screening, true, 2, 3));
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             Assert.Equal(62.10, total, precision: 2);
         }
@@ -133,7 +139,8 @@ namespace UnitTests
             order.AddSeatReservation(Ticket(screening, false, 1, 1)); // 10
             order.AddSeatReservation(Ticket(screening, false, 1, 2)); // 10
 
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
 
             Assert.Equal(20.0, total, precision: 2);
         }
@@ -145,7 +152,8 @@ namespace UnitTests
             var order = new Order(orderNr: 99, isStudentOrder: false);
 
             // Don't add any seat reservations to the order, so total is 0.0
-            var total = order.CalculatePrice();
+            var (free, premium, group) = order.CreatePricePolicies();
+            var total = order.CalculatePrice(free, premium, group);
             Assert.Equal(0.0, total, precision: 2);
         }
 
@@ -159,8 +167,10 @@ namespace UnitTests
             var nonStudentOrder = new Order(orderNr: 21, isStudentOrder: false);
             nonStudentOrder.AddSeatReservation(Ticket(screening, premium: true, row: 1, seat: 1)); // 13
 
-            Assert.Equal(12.0, studentOrder.CalculatePrice(), precision: 2);
-            Assert.Equal(13.0, nonStudentOrder.CalculatePrice(), precision: 2);
+            var (free, premium, group) = studentOrder.CreatePricePolicies();
+            var (free2, premium2, group2) = nonStudentOrder.CreatePricePolicies();
+            Assert.Equal(12.0, studentOrder.CalculatePrice(free, premium, group), precision: 2);
+            Assert.Equal(13.0, nonStudentOrder.CalculatePrice(free2, premium2, group2), precision: 2);
         }
 
         // EXPORT
@@ -177,7 +187,7 @@ namespace UnitTests
                 var order = new Order(orderNr: 500, isStudentOrder: true);
                 order.AddSeatReservation(Ticket(screening, false, 1, 1));
 
-                order.Export(TicketExportFormat.PLAINTEXT);
+                order.Export( new TextExporter());
 
                 var file = FindNewestFile(tempDir, "*.txt");
                 Assert.NotNull(file);
@@ -205,7 +215,7 @@ namespace UnitTests
                 var order = new Order(orderNr: 501, isStudentOrder: false);
                 order.AddSeatReservation(Ticket(screening, true, 1, 1));
 
-                order.Export(TicketExportFormat.JSON);
+                order.Export(new JsonExporter());
 
                 var file = FindNewestFile(tempDir, "*.json");
                 Assert.NotNull(file);
