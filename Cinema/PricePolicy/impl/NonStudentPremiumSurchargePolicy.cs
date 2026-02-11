@@ -1,6 +1,6 @@
 ﻿namespace Cinema.PricePolicy.impl;
 
-public sealed class NonStudentPremiumSurchagePolicy : IPremiumSurchargePolicy
+public sealed class NonStudentPremiumSurchargePolicy : IPremiumSurchargePolicy
 {
     public double GetSurchargePerPremiumTicket()
     {

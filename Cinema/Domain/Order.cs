@@ -74,7 +74,7 @@ namespace Cinema.Domain
             }
 
             return (new NonStudentFreeTicketPolicy(),
-                new NonStudentPremiumSurchagePolicy(),
+                new NonStudentPremiumSurchargePolicy(),
                 new NonStudentWeekendGroupDiscountPolicy());
         }
     }
