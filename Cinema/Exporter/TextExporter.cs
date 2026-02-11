@@ -26,7 +26,8 @@ public class TextExporter : IExporter
         }
 
         sb.AppendLine();
-        sb.AppendLine($"Total price: €{order.CalculatePrice():0.00}");
+        var (free, premium, group) = order.CreatePricePolicies();
+        sb.AppendLine($"Total price: €{order.CalculatePrice(free, premium, group):0.00}");
         
         File.WriteAllText("output.txt", sb.ToString());
     }

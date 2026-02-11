@@ -14,11 +14,7 @@ namespace Cinema.Domain
             DateAndTime = dateAndTime;
             PricePerSeat = pricePerSeat;
         }
-
-        public double GetPricePerSeat()
-        {
-            return PricePerSeat;
-        }
+        
 
         public override string ToString()
         {

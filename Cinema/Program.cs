@@ -13,7 +13,8 @@ order.AddSeatReservation(new MovieTicket(screening, true, 5, 11));  // premium
 order.AddSeatReservation(new MovieTicket(screening, false, 5, 12));
 order.AddSeatReservation(new MovieTicket(screening, true, 5, 13));  // premium
 
-Console.WriteLine($"Price: {order.CalculatePrice():0.00}");
+var (free, premium, group) = order.CreatePricePolicies();
+Console.WriteLine($"Price: {order.CalculatePrice(free, premium, group):0.00}");
 
 order.Export(new TextExporter());
 order.Export(new JsonExporter());
