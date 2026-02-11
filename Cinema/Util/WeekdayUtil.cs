@@ -1,6 +1,6 @@
 ﻿namespace Cinema.Util;
 
-public class WeekdayUtil
+public static class WeekdayUtil
 {
     public static bool IsWeekday(DateTime date)
     {
