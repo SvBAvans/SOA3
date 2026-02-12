@@ -1,22 +1,31 @@
-﻿using Cinema.Domain;
-using Cinema;
-using Cinema.Exporter;
+﻿// See https://aka.ms/new-console-template for more information
+
+using Cinema.Domain;
 
 var movie = new Movie("Dune 2");
 var screening = new MovieScreening(movie, new DateTime(2026, 2, 7, 20, 0, 0, DateTimeKind.Local), 12.50); // donderdag
 movie.AddScreening(screening);
 
-var order = new Order(1, isStudentOrder: true);
+List<MovieTicket> tickets = [
+    new(screening, false, 5, 10),
+    new(screening, true, 5, 11),
+    new(screening, false, 5, 12),
+    new(screening, true, 5, 13)
+];
 
-order.AddSeatReservation(new MovieTicket(screening, false, 5, 10));
-order.AddSeatReservation(new MovieTicket(screening, true, 5, 11));  // premium
-order.AddSeatReservation(new MovieTicket(screening, false, 5, 12));
-order.AddSeatReservation(new MovieTicket(screening, true, 5, 13));  // premium
+var order = new Order(1, false, tickets);
+Console.WriteLine(order.State);
 
-var (free, premium, group) = order.CreatePricePolicies();
-Console.WriteLine($"Price: {order.CalculatePrice(free, premium, group):0.00}");
+order.Submit();
+Console.WriteLine(order.State);
 
-order.Export(new TextExporter());
-order.Export(new JsonExporter());
+order.AddSeatReservation(new MovieTicket(screening, false, 10, 5));
 
-Console.WriteLine("Exported order_1.txt and order_1.json");
+order.Pay();
+Console.WriteLine(order.State);
+
+order.AddSeatReservation(new MovieTicket(screening, false, 10, 5));
+order.SetState(order.ProcessedState);
+
+order.Cancel();
+Console.WriteLine(order.State);

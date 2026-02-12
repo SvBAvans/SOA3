@@ -1,87 +1,60 @@
-﻿using Cinema.Exporter;
-using Cinema.PricePolicy;
-using Cinema.PricePolicy.impl;
+﻿using Cinema.Domain.State;
 
-namespace Cinema.Domain
+namespace Cinema.Domain;
+
+public class Order
 {
-    public class Order
+
+    public IOrderState CreatedState { get; }
+    public IOrderState CancelledState { get; }
+    public IOrderState SubmittedState { get; }
+    public IOrderState PayedState { get; }
+    public IOrderState ProcessedState { get; }
+    public IOrderState ProvisionalState { get; }
+
+    public IOrderState State;
+    public int OrderNr { get; set; }
+    public bool IsStudentOrder { get; set; }
+    public List<MovieTicket> Tickets { get; }
+
+    public Order(int orderNr, bool isStudentOrder, List<MovieTicket> tickets)
     {
-        public int OrderNr { get; set; }
-        public bool IsStudentOrder { get; set; }
-        public List<MovieTicket> Tickets { get; } = new List<MovieTicket>();
+        OrderNr = orderNr;
+        IsStudentOrder = isStudentOrder;
+        Tickets = tickets;
 
-        public Order(int orderNr, bool isStudentOrder)
-        {
-            OrderNr = orderNr;
-            IsStudentOrder = isStudentOrder;
-        }
-
-        public int GetOrderNr()
-        {
-            return OrderNr;
-        }
-
-        public void AddSeatReservation(MovieTicket ticket)
-        {
-            Tickets.Add(ticket);
-        }
-
-        public double CalculatePrice(
-            IFreeTicketPolicy freeTicketPolicy,
-            IPremiumSurchargePolicy premiumSurchargePolicy,
-            IGroupDiscountPolicy groupDiscountPolicy)
-        {
-            if (Tickets.Count == 0) return 0;
-
-            bool[] isFree = freeTicketPolicy.GetFreeTickets(Tickets);
-            double premiumExtra = premiumSurchargePolicy.GetSurchargePerPremiumTicket();
-
-            double subTotal = 0.0;
-            for (int i = 0; i < Tickets.Count; i++)
-            {
-                if (isFree[i]) continue;
-                
-                var ticket = Tickets[i];
-                double price = ticket.MovieScreening.PricePerSeat;
-
-                if (ticket.IsPremiumTicket())
-                {
-                    price += premiumExtra;
-                }
-
-                subTotal += price;
-            }
-
-            subTotal = groupDiscountPolicy.ApplyDiscount(subTotal, Tickets);
-            
-            return Math.Round(subTotal, 2, MidpointRounding.AwayFromZero);
-        }
-
-        public void Export(IExporter exporter)
-        {
-            exporter.Export(this);
-        }
-        
-        public (IFreeTicketPolicy free, IPremiumSurchargePolicy premium, IGroupDiscountPolicy group) CreatePricePolicies()
-        {
-            if (IsStudentOrder)
-            {
-                return (
-                    new StudentFreeTicketPolicy(),
-                    new StudentPremiumSurchargePolicy(),
-                    new NoGroupDiscountPolicy()
-                );
-            }
-
-            return (new NonStudentFreeTicketPolicy(),
-                new NonStudentPremiumSurchargePolicy(),
-                new NonStudentWeekendGroupDiscountPolicy());
-        }
+        CreatedState = new CreatedState(this);
+        CancelledState = new CancelledState();
+        SubmittedState = new SubmittedState(this);
+        PayedState = new PayedState();
+        ProcessedState = new ProcessedState();
+        ProvisionalState = new ProvisionalState(this);
+        State = CreatedState;
     }
 
-    public enum TicketExportFormat
+    public void SetState(IOrderState state)
     {
-        PLAINTEXT,
-        JSON
+        State = state;
+    }
+
+
+    public void Submit()
+    {
+        State.Submit();
+    }
+
+    public void Pay()
+    {
+        State.Pay();
+    }
+
+    public void AddSeatReservation(MovieTicket ticket)
+    {
+        State.AddSeatReservation(ticket);
+    }
+
+    public void Cancel()
+    {
+        State.Cancel();
     }
 }
