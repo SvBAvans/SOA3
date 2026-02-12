@@ -28,6 +28,19 @@ public class OrderCreatedStateTests
     }
 
     [Fact]
+    public void Pay_IsNotAllowed_FromCreated()
+    {
+        // Arrange
+        var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
+
+        // Act
+        order.Pay();
+
+        // Assert
+        Assert.IsNotType<PayedState>(order.State);
+    }
+
+    [Fact]
     public void Cancel_FromCreated_MovesToCancelled()
     {
         // Arrange

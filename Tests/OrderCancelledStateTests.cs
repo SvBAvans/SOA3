@@ -2,15 +2,15 @@
 
 namespace Tests;
 
-public class OrderPayedStateTests
+public class OrderCancelledStateTests
 {
     [Fact]
-    public void AddSeatReservation_IsNotAllowed_AfterPayment()
+    public void AddSeatReservation_IsNotAllowed_AfterCancelled()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.Cancel();
 
         var ticketCount = order.Tickets.Count;
 
@@ -19,30 +19,31 @@ public class OrderPayedStateTests
 
         // Assert
         Assert.Equal(ticketCount, order.Tickets.Count);
+        Assert.IsType<CancelledState>(order.State);
     }
 
     [Fact]
-    public void Pay_IsNotAllowed_AfterPayment()
+    public void Pay_IsNotAllowed_AfterCancelled()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.Cancel();
 
         // Act
         order.Pay();
 
         // Assert
-        Assert.IsType<PayedState>(order.State);
+        Assert.IsType<CancelledState>(order.State);
     }
     
     [Fact]
-    public void Submit_IsNotAllowed_AfterPayment()
+    public void Submit_IsNotAllowed_AfterCancelled()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.Cancel();
 
         // Act
         order.Submit();
@@ -52,17 +53,17 @@ public class OrderPayedStateTests
     }
 
     [Fact]
-    public void Cancel_IsNotAllowed_AfterPayment()
+    public void Cancel_IsNotAllowed_AfterCancelled()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.Cancel();
 
         // Act
         order.Cancel();
 
         // Assert
-        Assert.IsNotType<CancelledState>(order.State);
+        Assert.IsType<CancelledState>(order.State);
     }
 }

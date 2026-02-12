@@ -2,15 +2,15 @@
 
 namespace Tests;
 
-public class OrderPayedStateTests
+public class OrderProcessedStateTests
 {
     [Fact]
-    public void AddSeatReservation_IsNotAllowed_AfterPayment()
+    public void AddSeatReservation_IsNotAllowed_AfterProcessed()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.SetState(order.ProcessedState);
 
         var ticketCount = order.Tickets.Count;
 
@@ -19,30 +19,31 @@ public class OrderPayedStateTests
 
         // Assert
         Assert.Equal(ticketCount, order.Tickets.Count);
+        Assert.IsType<ProcessedState>(order.State);
     }
 
     [Fact]
-    public void Pay_IsNotAllowed_AfterPayment()
+    public void Pay_IsNotAllowed_AfterProcessed()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.SetState(order.ProcessedState);
 
         // Act
         order.Pay();
 
         // Assert
-        Assert.IsType<PayedState>(order.State);
+        Assert.IsType<ProcessedState>(order.State);
     }
     
     [Fact]
-    public void Submit_IsNotAllowed_AfterPayment()
+    public void Submit_IsNotAllowed_AfterProcessed()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.SetState(order.ProcessedState);
 
         // Act
         order.Submit();
@@ -52,12 +53,12 @@ public class OrderPayedStateTests
     }
 
     [Fact]
-    public void Cancel_IsNotAllowed_AfterPayment()
+    public void Cancel_IsNotAllowed_AfterProcessed()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.SetState(order.ProcessedState);
 
         // Act
         order.Cancel();

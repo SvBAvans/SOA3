@@ -2,32 +2,30 @@
 
 namespace Tests;
 
-public class OrderPayedStateTests
+public class OrderProvisionalStateTests
 {
+    
     [Fact]
-    public void AddSeatReservation_IsNotAllowed_AfterPayment()
+    public void AddSeatReservation_IsAllowed_InProvisional()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
-        order.Submit();
-        order.Pay();
-
         var ticketCount = order.Tickets.Count;
+        order.SetState(order.ProvisionalState);
 
         // Act
         order.AddSeatReservation(order.Tickets.First());
 
         // Assert
-        Assert.Equal(ticketCount, order.Tickets.Count);
+        Assert.Equal(ticketCount + 1, order.Tickets.Count);
     }
-
+    
     [Fact]
-    public void Pay_IsNotAllowed_AfterPayment()
+    public void Pay_FromProvisional_MovesToPayed()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
-        order.Submit();
-        order.Pay();
+        order.SetState(order.ProvisionalState);
 
         // Act
         order.Pay();
@@ -37,12 +35,12 @@ public class OrderPayedStateTests
     }
     
     [Fact]
-    public void Submit_IsNotAllowed_AfterPayment()
+    public void Submit_IsNotAllowed_AfterProvisional()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
         order.Submit();
-        order.Pay();
+        order.SetState(order.ProvisionalState);
 
         // Act
         order.Submit();
@@ -52,17 +50,16 @@ public class OrderPayedStateTests
     }
 
     [Fact]
-    public void Cancel_IsNotAllowed_AfterPayment()
+    public void Cancel_FromProvisional_MovesToCancelled()
     {
         // Arrange
         var order = OrderTestHelper.CreateDefaultOrder(DateTime.Now.AddDays(2));
-        order.Submit();
-        order.Pay();
+        order.SetState(order.ProvisionalState);
 
         // Act
         order.Cancel();
 
         // Assert
-        Assert.IsNotType<CancelledState>(order.State);
+        Assert.IsType<CancelledState>(order.State);
     }
 }
